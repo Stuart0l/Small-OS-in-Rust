@@ -17,7 +17,7 @@ middle_dir:
 page_table:
 	resb 4096
 stack_bottom:
-	resb 128
+	resb 4096
 stack_top:
 
 section .rodata

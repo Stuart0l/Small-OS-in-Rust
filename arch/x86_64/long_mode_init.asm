@@ -10,6 +10,9 @@ real64:
 	mov fs, ax
 	mov gs, ax
 
+	extern _start
+	call _start
+
 	mov rax, 0x2f592f412f4b2f4f
 	mov qword [0xb8000], rax
 	hlt

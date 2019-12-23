@@ -1,6 +1,7 @@
 /target
 /build
 **/*.rs.bk
+Cargo.lock
 *.o
 *.elf
 *.iso

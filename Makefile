@@ -6,8 +6,9 @@ linker_script	:= arch/$(arch)/link.ld
 grub_cfg	:= arch/$(arch)/grub.cfg
 assembly	:= $(shell find ./arch/$(arch)/ -name "*.asm")
 object		:= $(assembly:%.asm=%.o)
+rust_os		:= target/$(arch)-rsos/debug/rsos
 
-.PHONY: all clean run iso
+.PHONY: all clean run debug iso kernel
 
 all: $(kernel)
 
@@ -18,6 +19,9 @@ clean:
 run:
 	qemu-system-x86_64 -cdrom $(iso)
 
+debug:
+	qemu-system-x86_64 -cdrom $(iso) -s -S
+
 iso: $(iso)
 
 $(iso): $(kernel) $(grub_cfg)
@@ -27,9 +31,12 @@ $(iso): $(kernel) $(grub_cfg)
 	grub-mkrescue -o $(iso) build/iso
 	rm -r build/iso
 
-$(kernel): $(object) $(linker_script)
+$(kernel): $(object) $(linker_script) kernel
 	mkdir -p build
-	ld -n -T $(linker_script) -o $(kernel) $(object)
+	ld -n -T $(linker_script) -o $(kernel) $(object) $(rust_os)
+
+kernel:
+	cargo xbuild --target $(arch)-rsos.json
 
 %.o: %.asm
 	nasm -f elf64 $< -o $@
