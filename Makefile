@@ -6,7 +6,7 @@ linker_script	:= arch/$(arch)/link.ld
 grub_cfg	:= arch/$(arch)/grub.cfg
 assembly	:= $(shell find ./arch/$(arch)/ -name "*.asm")
 object		:= $(assembly:%.asm=%.o)
-rust_os		:= target/$(arch)-rsos/debug/rsos
+rust_os		:= target/$(arch)-rsos/debug/librsos.a
 
 .PHONY: all clean run debug iso kernel
 

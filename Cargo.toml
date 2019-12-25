@@ -5,6 +5,9 @@ authors = ["Xuhao Luo <rossihox@gmail.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+crate_type = ["staticlib"]
+
 [profile.dev]
 panic = "abort"
 
