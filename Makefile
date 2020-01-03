@@ -17,7 +17,9 @@ clean:
 	rm $(object)
 
 run:
-	qemu-system-x86_64 -cdrom $(iso)
+	qemu-system-x86_64 -cdrom $(iso) \
+	-device isa-debug-exit,iobase=0xf4,iosize=0x04 \
+	-serial stdio
 
 debug:
 	qemu-system-x86_64 -cdrom $(iso) -s -S

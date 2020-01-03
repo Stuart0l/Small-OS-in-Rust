@@ -7,6 +7,8 @@ authors = ["Xuhao Luo <rossihox@gmail.com>"]
 
 [dependencies]
 spin = "0.5.2"
+x86_64 = "0.8.2"
+uart_16550 = "0.2.1"
 
 [dependencies.lazy_static]
 version = "1.4.0"
