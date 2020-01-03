@@ -1,4 +1,5 @@
 #![no_std]
+#![feature(abi_x86_interrupt)]
 
 extern crate spin;
 extern crate lazy_static;
@@ -7,14 +8,23 @@ extern crate uart_16550;
 
 mod vga_buffer;
 mod serial;
+mod interrupt;
 
 use core::panic::PanicInfo;
 
 #[no_mangle]
 pub extern "C" fn _start()
 {
-	serial_println!("hello world{}", '!');
-	//panic!("some message");
+	println!("hello world{}", '!');
+	crate::interrupt::init();
+
+	x86_64::instructions::interrupts::int3();
+
+	println!("hello world{}", '!');
+
+	unsafe {
+		*(0xdeadbeef as *mut u64) = 42;
+	}
 
 	loop {};
 }
