@@ -11,12 +11,15 @@ mod serial;
 mod interrupt;
 
 use core::panic::PanicInfo;
+use interrupt::*;
 
 #[no_mangle]
 pub extern "C" fn _start()
 {
 	println!("hello world{}", '!');
-	crate::interrupt::init();
+	
+	setup_idt();
+	idt_set();
 
 	x86_64::instructions::interrupts::int3();
 

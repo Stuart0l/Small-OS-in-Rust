@@ -1,19 +1,29 @@
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
-use lazy_static::lazy_static;
+use spin::Mutex;
 use crate::serial_println;
 
-lazy_static! {
-	static ref IDT: InterruptDescriptorTable = {
-		let mut idt = InterruptDescriptorTable::new();
-		idt.breakpoint.set_handler_fn(int3);
-		idt.double_fault.set_handler_fn(doublefault_fn);
-		idt
+static IDT: Mutex<InterruptDescriptorTable> = Mutex::new({
+	let idt = InterruptDescriptorTable::new();
+	idt
+});
+
+pub fn setup_idt()
+{
+	use x86_64::instructions::tables::{lidt, DescriptorTablePointer};
+	use core::mem::size_of;
+	
+	let ptr = DescriptorTablePointer {
+		limit: (size_of::<InterruptDescriptorTable>() - 1) as u16,
+		base: &*IDT.lock() as *const InterruptDescriptorTable as u64,
 	};
+
+	unsafe { lidt(&ptr) };
 }
 
-pub fn init()
+pub fn idt_set()
 {
-	IDT.load();
+	IDT.lock().breakpoint.set_handler_fn(int3);
+	IDT.lock().double_fault.set_handler_fn(doublefault_fn);
 }
 
 extern "x86-interrupt" fn int3(stack_frame: &mut InterruptStackFrame)
