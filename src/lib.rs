@@ -11,23 +11,22 @@ mod serial;
 mod interrupt;
 
 use core::panic::PanicInfo;
-use interrupt::*;
+use interrupt::{idt, pic};
 
 #[no_mangle]
 pub extern "C" fn _start()
 {
 	println!("hello world{}", '!');
+
+	idt::setup_idt();
+	idt::idt_set();
 	
-	setup_idt();
-	idt_set();
+	pic::init_pic();
+	x86_64::instructions::interrupts::enable();
 
 	x86_64::instructions::interrupts::int3();
 
 	println!("hello world{}", '!');
-
-	unsafe {
-		*(0xdeadbeef as *mut u64) = 42;
-	}
 
 	loop {};
 }
@@ -37,7 +36,7 @@ fn panic(_info: &PanicInfo) -> !
 {
 	serial_println!("[Failed]\n");
 	serial_println!("{}", _info);
-	exit_qemu(QemuExitCode::Failed);
+	//exit_qemu(QemuExitCode::Failed);
 	loop {}
 }
 
