@@ -155,5 +155,9 @@ macro_rules! println
 pub fn _print(args: core::fmt::Arguments)
 {
 	use core::fmt::Write;
-	WRITER.lock().write_fmt(args).unwrap();
+	use x86_64::instructions::interrupts;
+
+	interrupts::without_interrupts(|| {
+		WRITER.lock().write_fmt(args).unwrap();
+	});
 }

@@ -81,4 +81,5 @@ pub fn idt_set()
 	set_system_intr_gate!(breakpoint, handler::int3);
 	set_trap_gate!(double_fault, handler::doublefault_fn);
 	set_intr_gate!(32, handler::timer_handler);
+	set_intr_gate!(33, handler::keyboard_handler);
 }
