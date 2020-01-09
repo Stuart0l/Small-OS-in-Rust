@@ -1,31 +1,39 @@
-global start
+global start, stack_top
 extern real64
 
-MAGIC_VALUE equ 0x36d76289
+%define pgd_index(addr) (((addr >> 39)) & 0x1ff)
+%define	pud_index(addr) (((addr >> 30)) & 0x1ff)
 
-section .bss
+MAGIC_VALUE equ 0x36d76289
+KERNEL_VIRT_START equ 0xffffffff80000000
+
+section .bootbss
 align 4096
 ; +-------------+------------+-------------+-------------+----------+
 ; |global dir(9)|upper dir(9)|middle dir(9)|page table(9)|offset(12)|
 ; +-------------+------------+-------------+-------------+----------+
 global_dir:
-	resb 4096
-upper_dir:
-	resb 4096
-middle_dir:
-	resb 4096
+	times 4096 db 0
+upper_dir_low:
+	times 4096 db 0
+upper_dir_high:
+	times 4096 db 0
+middle_dir_low:
+	times 4096 db 0
+middle_dir_high:
+	times 4096 db 0
 page_table:
-	resb 4096
+	times 4096 db 0
 stack_bottom:
-	resb 4096 * 4
+	times 4096 * 4 db 0
 stack_top:
 
-section .rodata
+section .bootrodata
 gdt64:
 .null:
 	dq 0	; zero entry
 .code: equ $ - gdt64
-	dw 0xffff
+	dw 0
 	dw 0
 	db 0
 	db 10011000b	; present, ring0, code/data, code
@@ -42,10 +50,11 @@ gdt64:
 	dw $ - gdt64 - 1
 	dq gdt64
 
-section .text
+section .boottext
 bits 32
 start:
 	mov esp, stack_top
+	mov edi, ebx	; multiboot information
 
 	call check_multiboot
 	call check_cpuid
@@ -122,22 +131,35 @@ check_long_mode:
 	jmp error
 
 setup_page_tables:
-	mov eax, upper_dir
+	; map lower half: 0x0000000000000000 ~ 0x000000003fffffff
+	mov eax, upper_dir_low
 	or eax, 11b	; present | writable
-	mov [global_dir], eax
+	mov [global_dir + pgd_index(0) * 8], eax
 
-	mov eax, middle_dir
+	mov eax, middle_dir_low
 	or eax, 11b	; present | writable
-	mov [upper_dir], eax
+	mov [upper_dir_low + pud_index(0) * 8], eax
+
+	; map higher half: 0xffffffff80000000 ~ 0xffffffffbfffffff
+	mov eax, upper_dir_high
+	or eax, 11b	; present | writable
+	mov [global_dir + pgd_index(KERNEL_VIRT_START) * 8], eax
+
+	mov eax, middle_dir_high
+	or eax, 11b	; present | writable
+	mov [upper_dir_high + pud_index(KERNEL_VIRT_START) * 8], eax
 
 	mov ecx, 512
-	mov edi, middle_dir
+	mov edi, middle_dir_low
+	mov esi, middle_dir_high
 	mov eax, 0x0
 	or eax, 10000011b ; present | writable | huge 
 .map_middle_dir:
 	mov [edi], eax
+	mov [esi], eax
 	add eax, 0x200000
 	add edi, 8
+	add esi, 8
 	loop .map_middle_dir
 	ret
 
